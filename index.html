@@ -233,10 +233,27 @@
     <div class="tagline" style="font-size: 14px; margin-top: 20px; opacity: 0.7;">
         Reports, Annexures & Data Management
     </div>
-<div style="margin-top: 10px; opacity: 0.8;">
-    <img src="https://hitwebcounter.com/counter/counter.php?page=srinis-ai-portal-new&style=0006&nbdigits=5&type=page&initCount=125" title="Free Counter" Alt="web counter" border="0" />
-    <p style="font-size: 10px;">Total Visitors</p>
+<div style="text-align: center; margin-top: 20px; color: #ccc;">
+    <p style="font-size: 14px; margin-bottom: 5px;">कुल विज़िटर्स (Total Visitors)</p>
+    <h3 id="count" style="color: var(--primary-color); font-size: 24px;">0000</h3>
 </div>
+
+<script>
+    // यह फ़ंक्शन इंटरनेट से आपका कुल काउंट लेकर आएगा
+    async function updateCounter() {
+        try {
+            // 'srinis-ai-2026' आपका यूनिक कीवर्ड है
+            const response = await fetch('https://api.countapi.xyz/hit/srinis-ai-2026/visits');
+            const data = await response.json();
+            document.getElementById('count').innerText = data.value.toLocaleString();
+        } catch (error) {
+            console.log("Counter error:", error);
+            // अगर API काम न करे तो रैंडम नंबर दिखाने के लिए (वैकल्पिक)
+            document.getElementById('count').innerText = "120+"; 
+        }
+    }
+    updateCounter();
+</script>
     <footer>
         &copy; 2026 SRINIS AI. Developed by SRINIS. All Rights Reserved.<br>
         Optimized for Mobile & Desktop
@@ -245,5 +262,6 @@
 </body>
 
 </html>
+
 
 
