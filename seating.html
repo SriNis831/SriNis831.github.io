@@ -136,10 +136,10 @@
             .print-page:last-child { page-break-after: auto; }
         }
 
-        /* --- ✨ PDF EXPORT SPECIFIC STYLES (Fixed for Mobile) ✨ --- */
+        /* --- PDF EXPORT SPECIFIC STYLES (Fixed for Mobile Scaling) --- */
         body.pdf-export-mode { 
             background: white !important; padding: 0 !important; margin: 0 !important; 
-            width: 1024px !important; /* Force Desktop Width on Mobile */
+            width: 1024px !important; 
         }
         body.pdf-export-mode .controls, body.pdf-export-mode .action-bar, body.pdf-export-mode .ui-footer { 
             display: none !important; 
@@ -151,9 +151,9 @@
             box-shadow: none !important; border-radius: 0 !important; 
             margin: 0 !important; 
             width: 210mm !important; 
-            height: 296mm !important; /* Strict A4 Height */
-            max-height: 296mm !important; /* Prevent Squeeze Expansion */
-            overflow: hidden !important; /* Cut extra height */
+            height: 296mm !important; 
+            max-height: 296mm !important; 
+            overflow: hidden !important; 
             page-break-after: always; 
             page-break-inside: avoid;
         }
@@ -709,6 +709,7 @@
             let finalAdminPagesHTML = '';
 
             if(masterSummaryData.length > 0) {
+                // MASTER NOTICE BOARD (Section Wise with Room Total)
                 finalAdminPagesHTML += `
                 <div class="print-page">
                     <div class="page-content">
@@ -720,27 +721,36 @@
                         <table class="master-tbl">
                             <thead><tr><th style="width:20%">कमरा (Room)</th><th style="width:80%">कक्षा एवं रोल नंबर विवरण (Class & Roll Details)</th></tr></thead>
                             <tbody>
-                                ${masterSummaryData.map(m => `
+                                ${masterSummaryData.map(m => {
+                                    let roomTotal = m.classSummaries.reduce((sum, cs) => sum + cs.total, 0);
+                                    return `
                                     <tr>
-                                        <td class="room-col"><b>${m.roomName}</b></td>
+                                        <td class="room-col" style="vertical-align: middle;">
+                                            <b style="font-size:1.15rem;">${m.roomName}</b><br>
+                                            <div style="margin-top: 5px; font-size: 1rem; color: #b45309; font-weight: 900;">Total: ${roomTotal}</div>
+                                        </td>
                                         <td style="text-align:left; padding: 10px 15px; line-height: 1.6;">
                                             ${m.classSummaries.map(cs => {
-                                                let nsoBadge = cs.nso.length > 0 ? `<br><span style="color: #dc2626; font-size: 0.95rem; margin-top: 4px; display: block;"><b>NSO:</b> ${cs.nso.join(', ')}</span>` : '';
-                                                return `
+                                                let nsoBadge = cs.nso.length > 0 ? \`<br><span style="color: #dc2626; font-size: 0.95rem; margin-top: 4px; display: block;"><b>NSO:</b> \${cs.nso.join(', ')}</span>\` : '';
+                                                return \`
                                                 <div style="border-bottom: 1px dashed #ccc; padding-bottom: 5px; margin-bottom: 5px; display: flex; justify-content: space-between; align-items: flex-start;">
                                                     <div style="flex: 1;">
-                                                        <b>${cs.className}</b> : 
-                                                        <span style="color: #1e3a8a; font-weight:600;">${cs.summaryText}</span> 
-                                                        ${nsoBadge}
+                                                        <b>\${cs.className}</b> : 
+                                                        <span style="color: #1e3a8a; font-weight:600;">\${cs.summaryText}</span> 
+                                                        \${nsoBadge}
                                                     </div>
-                                                    <div style="font-weight: bold; background: #e2e8f0; padding: 4px 10px; border: 2px solid #000; border-radius: 4px; margin-left: 10px; white-space: nowrap; font-size: 1.1rem;">
-                                                        Total: ${cs.total}
+                                                    <div style="font-weight: bold; background: #e2e8f0; padding: 4px 10px; border-radius: 4px; margin-left: 10px; white-space: nowrap; font-size: 1.1rem;">
+                                                        Total: \${cs.total}
                                                     </div>
-                                                </div>`;
+                                                </div>\`;
                                             }).join('')}
+                                            <div style="text-align: right; padding-top: 5px; font-weight: 900; font-size: 1.1rem; color: #1e3a8a;">
+                                                कमरे में कुल छात्र: ${roomTotal}
+                                            </div>
                                         </td>
                                     </tr>
-                                `).join('')}
+                                    `;
+                                }).join('')}
                             </tbody>
                         </table>
                     </div>
@@ -750,6 +760,7 @@
                     </div>
                 </div>`;
 
+                // SECRET DUTY LIST PAGE
                 finalAdminPagesHTML += `
                 <div class="print-page">
                     <div class="page-content">
@@ -795,7 +806,7 @@
             setTimeout(() => { document.getElementById("print-container").scrollIntoView({ behavior: 'smooth' }); }, 100);
         }
 
-        // --- 5. ✨ NEW: MOBILE VIEWPORT FIX FOR PDF EXPORT ✨ ---
+        // --- 5. ✨ MOBILE VIEWPORT FIX FOR PDF EXPORT ✨ ---
         function downloadOrPrintPDF() {
             let container = document.getElementById('print-container');
             if(container.innerHTML.trim() === '') {
@@ -811,7 +822,7 @@
                 btn.innerHTML = "⏳ Downloading PDF...";
                 btn.disabled = true;
 
-                // 1. Force the mobile browser to think it is a desktop screen
+                // Force desktop layout
                 document.body.classList.add('pdf-export-mode');
                 let viewport = document.querySelector("meta[name=viewport]");
                 if(viewport) viewport.setAttribute("content", "width=1024");
@@ -825,12 +836,11 @@
                         useCORS: true, 
                         logging: false,
                         scrollY: 0,
-                        windowWidth: 1024 // Force 1024px width rendering
+                        windowWidth: 1024
                     },
                     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
 
-                // Wait 0.5 sec to let the screen resize before capturing the PDF
                 setTimeout(() => {
                     html2pdf().set(opt).from(container).save().then(() => {
                         document.body.classList.remove('pdf-export-mode');
@@ -847,7 +857,6 @@
                 }, 500);
 
             } else {
-                // PC Browser will open normal Print Window
                 window.print();
             }
         }
