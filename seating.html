@@ -136,14 +136,26 @@
             .print-page:last-child { page-break-after: auto; }
         }
 
-        /* --- PDF EXPORT SPECIFIC STYLES (Fixed for Mobile Scaling) --- */
-        body.pdf-export-mode { background: white !important; padding: 0 !important; margin: 0 !important; }
-        body.pdf-export-mode .controls, body.pdf-export-mode .action-bar, body.pdf-export-mode .ui-footer { display: none !important; }
-        body.pdf-export-mode #print-container { gap: 0 !important; margin: 0 !important; display: block !important; width: 800px !important; }
+        /* --- ✨ PDF EXPORT SPECIFIC STYLES (Fixed for Mobile) ✨ --- */
+        body.pdf-export-mode { 
+            background: white !important; padding: 0 !important; margin: 0 !important; 
+            width: 1024px !important; /* Force Desktop Width on Mobile */
+        }
+        body.pdf-export-mode .controls, body.pdf-export-mode .action-bar, body.pdf-export-mode .ui-footer { 
+            display: none !important; 
+        }
+        body.pdf-export-mode #print-container { 
+            gap: 0 !important; margin: 0 !important; display: block !important; width: 1024px !important; 
+        }
         body.pdf-export-mode .print-page { 
             box-shadow: none !important; border-radius: 0 !important; 
-            margin: 0 !important; width: 800px !important; height: 1120px !important; 
-            page-break-after: always; page-break-inside: avoid;
+            margin: 0 !important; 
+            width: 210mm !important; 
+            height: 296mm !important; /* Strict A4 Height */
+            max-height: 296mm !important; /* Prevent Squeeze Expansion */
+            overflow: hidden !important; /* Cut extra height */
+            page-break-after: always; 
+            page-break-inside: avoid;
         }
     </style>
 </head>
@@ -254,14 +266,12 @@
                 });
             }
 
-            // Load Settings
             let savedPattern = localStorage.getItem('savedPatternV1');
             if(savedPattern) document.getElementById('pattern').value = savedPattern;
 
             let savedDist = localStorage.getItem('savedDistributionV1');
             if(savedDist) document.getElementById('distribution').value = savedDist;
 
-            // Deep JSON Loading for Rooms
             let savedRoomsJSON = localStorage.getItem('savedRoomsJSON_V1');
             if(savedRoomsJSON) {
                 try {
@@ -310,7 +320,6 @@
             }
         }
 
-        // Live input tracking saves to JSON automatically
         document.getElementById('input-area').addEventListener('input', () => { updateLiveTracker(); saveRoomsLocally(); });
         document.getElementById('pattern').addEventListener('change', () => { updateLiveTracker(); saveRoomsLocally(); });
         document.getElementById('distribution').addEventListener('change', () => { saveRoomsLocally(); });
@@ -388,7 +397,6 @@
 
             if(globalClassesData.length === 0) { alert("No classes linked. Please add classes in Master Setup."); return; }
 
-            // Group classes by Base Class for proper column fill
             let streamsMap = {};
             globalClassesData.forEach(c => {
                 let baseName = c.className.split(' ')[0]; 
@@ -426,7 +434,7 @@
             let dutyListData = [];
             let groupedPagesHTML = '';
 
-            let lastStreamPlaced = 0; // Ensures perfect continuity between columns and extra seats
+            let lastStreamPlaced = 0; 
 
             rooms.forEach((room, rIdx) => {
                 if (activeStreams.every(s => s.index >= s.students.length)) return;
@@ -437,10 +445,9 @@
                 let flatRoomRollsForAttendance = [];
                 let adjustedList = [];
 
-                // PERFECT SEATING ALGORITHM (Gapless Column Fill)
                 for (let c = 0; c < room.rows; c++) {
                     let reverse = (pattern === 'snake' && c % 2 === 1);
-                    let preferredClassIdx = c % activeStreams.length; // Start column with logical class
+                    let preferredClassIdx = c % activeStreams.length; 
                     
                     for (let d = 0; d < room.desks; d++) {
                         let deskIndex = reverse ? (room.desks - 1 - d) : d;
@@ -459,7 +466,7 @@
                                 let st = stream.students[stream.index++];
                                 grid[deskIndex][c] = st;
                                 flatRoomRollsForAttendance.push(st);
-                                preferredClassIdx = sIdx; // If class finishes, next student in this column stays continuous
+                                preferredClassIdx = sIdx; 
                                 lastStreamPlaced = sIdx;
                                 break;
                             }
@@ -467,7 +474,6 @@
                     }
                 }
 
-                // Fill Extra Seats seamlessly
                 for (let e = 0; e < room.extra; e++) {
                     let assigned = false;
                     for(let i = 0; i < activeStreams.length; i++) {
@@ -491,7 +497,6 @@
                     if(!assigned) break;
                 }
 
-                // Section-wise Room Summaries & Notice Board Data (Full Class Names)
                 let roomClassGroups = {};
                 flatRoomRollsForAttendance.forEach(st => {
                     if(!roomClassGroups[st.fullClassName]) {
@@ -692,12 +697,10 @@
                 }
             });
 
-            // 1. ADD ONLY ONE RESERVE TEACHER
             if (rooms.length < teacherPool.length) {
                 dutyListData.push({ room: "सुरक्षित (Reserve)", teacher: teacherPool[rooms.length] });
             }
 
-            // 2. EXAM INCHARGE AT POSITION 1
             let finalDutyList = [
                 { room: "परीक्षा कार्यालय", teacher: inchargeName, isIncharge: true },
                 ...dutyListData
@@ -706,7 +709,6 @@
             let finalAdminPagesHTML = '';
 
             if(masterSummaryData.length > 0) {
-                // MASTER NOTICE BOARD (Section Wise)
                 finalAdminPagesHTML += `
                 <div class="print-page">
                     <div class="page-content">
@@ -748,7 +750,6 @@
                     </div>
                 </div>`;
 
-                // SECRET DUTY LIST PAGE
                 finalAdminPagesHTML += `
                 <div class="print-page">
                     <div class="page-content">
@@ -794,7 +795,7 @@
             setTimeout(() => { document.getElementById("print-container").scrollIntoView({ behavior: 'smooth' }); }, 100);
         }
 
-        // --- 5. MOBILE PDF EXPORT SYSTEM (FIXED WIDTH TO PREVENT 28 PAGES ISSUE) ---
+        // --- 5. ✨ NEW: MOBILE VIEWPORT FIX FOR PDF EXPORT ✨ ---
         function downloadOrPrintPDF() {
             let container = document.getElementById('print-container');
             if(container.innerHTML.trim() === '') {
@@ -810,7 +811,10 @@
                 btn.innerHTML = "⏳ Downloading PDF...";
                 btn.disabled = true;
 
+                // 1. Force the mobile browser to think it is a desktop screen
                 document.body.classList.add('pdf-export-mode');
+                let viewport = document.querySelector("meta[name=viewport]");
+                if(viewport) viewport.setAttribute("content", "width=1024");
 
                 var opt = {
                     margin:       0,
@@ -820,23 +824,30 @@
                         scale: 2, 
                         useCORS: true, 
                         logging: false,
-                        windowWidth: 800 // <--- THIS PREVENTS MOBILE FROM SHRINKING THE PAGE (Fixes 28 pages issue)
+                        scrollY: 0,
+                        windowWidth: 1024 // Force 1024px width rendering
                     },
                     jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
 
-                html2pdf().set(opt).from(container).save().then(() => {
-                    document.body.classList.remove('pdf-export-mode');
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                }).catch(err => {
-                    document.body.classList.remove('pdf-export-mode');
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                    alert("PDF डाउनलोड में त्रुटि हुई।");
-                });
+                // Wait 0.5 sec to let the screen resize before capturing the PDF
+                setTimeout(() => {
+                    html2pdf().set(opt).from(container).save().then(() => {
+                        document.body.classList.remove('pdf-export-mode');
+                        if(viewport) viewport.setAttribute("content", "width=device-width, initial-scale=1.0");
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    }).catch(err => {
+                        document.body.classList.remove('pdf-export-mode');
+                        if(viewport) viewport.setAttribute("content", "width=device-width, initial-scale=1.0");
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                        alert("PDF डाउनलोड में त्रुटि हुई।");
+                    });
+                }, 500);
+
             } else {
-                // Desktop System
+                // PC Browser will open normal Print Window
                 window.print();
             }
         }
