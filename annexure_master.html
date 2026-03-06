@@ -291,17 +291,20 @@
     }
     // --- EXCEL UPLOAD & DEMO FUNCTIONS ---
     function downloadDemoExcel() {
+        // चेक करते हैं कि लाइब्रेरी लोड हुई या नहीं
+        if (typeof XLSX === 'undefined') {
+            alert("❌ Excel Library लोड नहीं हुई है! कृपया पेज के सबसे ऊपर <head> में <script> टैग चेक करें।");
+            return;
+        }
+
         const ws_data = [
             ["Student Name", "Father Name", "Aadhar No", "Reg/Roll No"], // Headers
-            ["Rahul Kumar", "Ramesh Kumar", "123456789012", "101"],     // Demo Row 1
-            ["Priya Sharma", "Suresh Sharma", "987654321098", "102"]      // Demo Row 2
-        ];
+         ];
         const ws = XLSX.utils.aoa_to_sheet(ws_data);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Students");
         XLSX.writeFile(wb, "Demo_Student_Entry.xlsx");
     }
-
     function processExcel() {
         const fileInput = document.getElementById('excel_file');
         const file = fileInput.files[0];
@@ -355,4 +358,5 @@
 </body>
 
 </html>
+
 
